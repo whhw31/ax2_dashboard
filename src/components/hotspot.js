@@ -11,9 +11,11 @@ let currentSort = 'download'; // download | upload | time | name
 let searchQuery = '';
 let usersSearchQuery = '';
 let cachedProfiles = [];
+let cachedUsers = [];
 
 // Load profiles and users once
 api.getProfiles().then(p => { cachedProfiles = p; }).catch(() => {});
+// api.getUsers() will now be updated by SSE, but we do a first load
 api.getUsers().then(u => { cachedUsers = u; }).catch(() => {});
 
 // ════════════════════════════════════════════════════════════════
@@ -159,12 +161,16 @@ export function updateActive(data) {
 // ════════════════════════════════════════════════════════════════
 // USERS
 // ════════════════════════════════════════════════════════════════
-let cachedUsers = [];
 
 export function renderUsers(container) {
   container.innerHTML = `
     <div class="section-header">
       <h2 class="section-title">Hotspot Users<span class="section-count" id="users-count">—</span></h2>
+      <button class="btn btn-secondary btn-sm" id="reset-all-btn" onclick="window.__resetAllCounters()">🔄 Reset All</button>
+    </div>
+    <div class="info-banner" style="margin-bottom:var(--space-md); font-size:11px; opacity:0.8; display:flex; align-items:center; gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>Stats represent lifetime usage. Active sessions may briefly show higher numbers until reconnected.</span>
     </div>
     <div class="search-bar">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -190,13 +196,22 @@ export function renderUsers(container) {
 
 async function loadUsers() {
   try {
-    cachedUsers = await api.getUsers();
-    const countEl = document.getElementById('users-count');
-    if (countEl) countEl.textContent = cachedUsers.length;
-    renderUsersList();
+    const users = await api.getUsers();
+    updateUsers({ users });
   } catch (err) {
     showToast('Failed to load users: ' + err.message, 'error');
   }
+}
+
+export function updateUsers(data) {
+  if (!data?.users) return;
+  cachedUsers = data.users;
+  
+  const countEl = document.getElementById('users-count');
+  if (countEl) countEl.textContent = cachedUsers.length;
+  
+  // Re-render only if we are on the users list or it's needed
+  renderUsersList();
 }
 
 function renderUsersList() {
@@ -249,6 +264,7 @@ function renderUsersList() {
         <div class="user-actions">
           <button class="btn btn-speed btn-sm" onclick="window.__editUser('${escapeHtml(id)}')">✏️ Edit</button>
           <button class="btn btn-sm btn-success" onclick="window.__speedUserAction('${escapeHtml(name)}', '${escapeHtml(id)}')">⚡ Speed</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.__resetCounters('${escapeHtml(name)}', '${escapeHtml(id)}')">🔄 Reset</button>
           <button class="btn btn-danger btn-sm" onclick="window.__deleteUser('${escapeHtml(name)}', '${escapeHtml(id)}')">🗑 Delete</button>
         </div>
       </div>`;
@@ -449,6 +465,52 @@ window.__deleteUser = (username, userId) => {
         loadUsers();
       } catch (err) {
         showToast('Failed to delete: ' + err.message, 'error');
+      }
+    }
+  );
+};
+
+// Reset counters for a specific user
+window.__resetCounters = (username, userId) => {
+  showConfirmModal(
+    `Reset counters for ${username}?`,
+    'This will zero out their downloaded/uploaded bytes. For active users, you should also disconnect them to restart their current session stats.',
+    async () => {
+      try {
+        await api.resetCounters(userId);
+        showToast(`Counters reset for ${username}`, 'success');
+        
+        // Also offer to disconnect if active
+        if (window.__lastStreamData && window.__lastStreamData.active) {
+          const activeSession = window.__lastStreamData.active.find(a => a.user === username);
+          if (activeSession) {
+             await api.disconnect(activeSession['.id']);
+             showToast(`Active session restarted for ${username}`, 'info');
+          }
+        }
+        loadUsers();
+      } catch (err) {
+        showToast('Failed to reset: ' + err.message, 'error');
+      }
+    }
+  );
+};
+
+// Reset ALL counters
+window.__resetAllCounters = () => {
+  showConfirmModal(
+    'Reset ALL User Counters?',
+    'This will set downloaded/uploaded bytes to zero for ALL users. Warning: This cannot be undone.',
+    async () => {
+      try {
+        await api.resetAllCounters();
+        showToast('All counters reset', 'success');
+        
+        // Optional: Disconnect all active for full refresh? 
+        // Might be too aggressive. Just refresh list.
+        loadUsers();
+      } catch (err) {
+        showToast('Failed to reset all: ' + err.message, 'error');
       }
     }
   );

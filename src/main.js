@@ -1,6 +1,6 @@
 // ── Main Entry Point ────────────────────────────────────────────
 import { renderHealth, updateHealth } from './components/health.js';
-import { renderActive, updateActive, renderUsers, renderHosts } from './components/hotspot.js';
+import { renderActive, updateActive, renderUsers, updateUsers, renderHosts } from './components/hotspot.js';
 import { formatBytes, formatUptime, memoryPercent, formatBps } from './utils.js';
 
 // ── State ──────────────────────────────────────────────────────
@@ -98,7 +98,14 @@ function connectSSE() {
         case 'active':
           updateActive(data);
           break;
-        // Users & Hosts do their own fetching
+        case 'users':
+          updateUsers(data);
+          break;
+      }
+      
+      // Always keep users cache fresh even if not on tab
+      if (currentTab !== 'users') {
+        updateUsers(data);
       }
     } catch (err) {
       console.error('[SSE parse error]', err);

@@ -33,6 +33,8 @@ export const api = {
   addUser: (data) => request('POST', '/hotspot/users', data),
   updateUser: (id, data) => request('PATCH', `/hotspot/users/${id}`, data),
   deleteUser: (id) => request('DELETE', `/hotspot/users/${id}`),
+  resetCounters: (id) => request('POST', '/hotspot/users/reset-counters', { id }),
+  resetAllCounters: () => request('POST', '/hotspot/users/reset-all-counters', {}),
 
   // Hotspot — Profiles
   getProfiles: () => request('GET', '/hotspot/profiles'),

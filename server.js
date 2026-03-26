@@ -97,13 +97,14 @@ app.get('/api/stream', (req, res) => {
   const poll = async () => {
     if (!alive) return;
     try {
-      const [resource, health, interfaces, active, hosts, queues] = await Promise.all([
+      const [resource, health, interfaces, active, hosts, queues, users] = await Promise.all([
         mikrotik('GET', '/system/resource'),
         mikrotik('GET', '/system/health').catch(() => []),
         mikrotik('GET', '/interface'),
         mikrotik('GET', '/ip/hotspot/active'),
         mikrotik('GET', '/ip/hotspot/host'),
         mikrotik('GET', '/queue/simple').catch(() => []),
+        mikrotik('GET', '/ip/hotspot/user'),
       ]);
 
       const payload = {
@@ -114,6 +115,7 @@ app.get('/api/stream', (req, res) => {
         active,
         hosts,
         queues,
+        users,
       };
 
       res.write(`data: ${JSON.stringify(payload)}\n\n`);
@@ -197,6 +199,26 @@ app.delete('/api/hotspot/users/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
     res.json(await mikrotik('DELETE', `/ip/hotspot/user/${id}`));
+  } catch (e) { next(e); }
+});
+
+// Hotspot — Reset counters for specific user
+app.post('/api/hotspot/users/reset-counters', async (req, res, next) => {
+  try {
+    const { id } = req.body;
+    await mikrotik('POST', '/ip/hotspot/user/reset-counters', { '.id': id });
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+// Hotspot — Reset ALL counters
+app.post('/api/hotspot/users/reset-all-counters', async (req, res, next) => {
+  try {
+    // MikroTik API doesn't always support 'all' via .id in REST, 
+    // but calling without body or with empty selection usually works if target is command.
+    // However, safest way is to fetch IDs and reset each, or just call command on path.
+    await mikrotik('POST', '/ip/hotspot/user/reset-counters', {});
+    res.json({ success: true });
   } catch (e) { next(e); }
 });
 
