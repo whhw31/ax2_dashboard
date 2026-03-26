@@ -107,10 +107,10 @@ app.get('/api/stream', (req, res) => {
         mikrotik('GET', '/system/resource'),
         mikrotik('GET', '/system/health').catch(() => []),
         mikrotik('GET', '/interface'),
-        mikrotik('GET', '/ip/hotspot/active'),
-        mikrotik('GET', '/ip/hotspot/host'),
+        mikrotik('GET', '/ip/hotspot/active').catch(() => []),
+        mikrotik('GET', '/ip/hotspot/host').catch(() => []),
         mikrotik('GET', '/queue/simple').catch(() => []),
-        mikrotik('GET', '/ip/hotspot/user'),
+        mikrotik('GET', '/ip/hotspot/user').catch(() => []),
       ]);
 
       const payload = {

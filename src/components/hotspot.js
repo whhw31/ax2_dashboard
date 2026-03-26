@@ -1,6 +1,6 @@
 // ── Hotspot Component — Active Sessions, Users, Hosts ───────────
 import {
-  formatBytes, formatUptime, stringToColor, getInitials,
+  formatBytes, formatUptime, formatBps, stringToColor, getInitials,
   escapeHtml, showToast
 } from '../utils.js';
 import { api } from '../api.js';
@@ -90,7 +90,7 @@ export function updateActive(data) {
     const currOut = parseInt(s['bytes-out'] || 0);
 
     if (prev && prev.timestamp < now) {
-      const dt = (now - prev.timestamp) / 1000; // seconds
+      const dt = Math.max(0.1, (now - prev.timestamp) / 1000); // minimum 100ms
       // bits per second
       s._rateIn = Math.max(0, (currIn - prev.bytesIn) * 8 / dt);
       s._rateOut = Math.max(0, (currOut - prev.bytesOut) * 8 / dt);
@@ -103,11 +103,19 @@ export function updateActive(data) {
     previousActiveData.set(id, { bytesIn: currIn, bytesOut: currOut, timestamp: now });
   });
 
-  // Cleanup old previous data (sessions no longer present)
-  const currentIds = new Set(data.active.map(s => s['.id']));
-  for (const id of previousActiveData.keys()) {
-    if (!currentIds.has(id)) previousActiveData.delete(id);
+  // Cleanup map (memory leak protection)
+  if (previousActiveData.size > 200) {
+      const currentIds = new Set(data.active.map(s => s['.id']));
+      for (const id of previousActiveData.keys()) {
+          if (!currentIds.has(id)) previousActiveData.delete(id);
+      }
   }
+
+  // Final validation to avoid NaN in sort
+  sessions.forEach(s => {
+      if (typeof s._rateIn !== 'number' || isNaN(s._rateIn)) s._rateIn = 0;
+      if (typeof s._rateOut !== 'number' || isNaN(s._rateOut)) s._rateOut = 0;
+  });
 
   // Sort
   sessions.sort((a, b) => {
@@ -244,14 +252,22 @@ async function loadUsers() {
 }
 
 export function updateUsers(data) {
-  if (!data?.users) return;
-  cachedUsers = data.users;
-  
-  const countEl = document.getElementById('users-count');
-  if (countEl) countEl.textContent = cachedUsers.length;
-  
-  // Re-render only if we are on the users list or it's needed
-  renderUsersList();
+  try {
+    if (!data?.users) return;
+    cachedUsers = data.users;
+    
+    const countEl = document.getElementById('users-count');
+    if (countEl) countEl.textContent = cachedUsers.length;
+    
+    // CRITICAL: Only re-render the list if the users tab exists in DOM
+    // to prevent background computation lag when users are not looking.
+    const listEl = document.getElementById('users-list');
+    if (listEl) {
+        renderUsersList();
+    }
+  } catch (err) {
+    console.warn('[updateUsers Error]', err);
+  }
 }
 
 function renderUsersList() {
