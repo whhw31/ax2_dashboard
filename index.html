@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="MikroTik hAP ax2 real-time dashboard for hotspot management and router monitoring" />
+  <title>ax2 Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Top bar -->
+    <header id="topbar">
+      <div class="topbar-left">
+        <div class="topbar-logo" id="logo-pulse">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
+          </svg>
+        </div>
+        <h1 class="topbar-title">ax2 Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="connection-status" id="connection-status">
+          <span class="status-dot"></span>
+          <span class="status-label">Connecting…</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Health summary strip -->
+    <div id="health-strip" class="health-strip">
+      <div class="health-chip" id="chip-cpu">
+        <span class="chip-icon">⚡</span>
+        <span class="chip-label">CPU</span>
+        <span class="chip-value" id="val-cpu">—</span>
+      </div>
+      <div class="health-chip" id="chip-mem">
+        <span class="chip-icon">🧠</span>
+        <span class="chip-label">MEM</span>
+        <span class="chip-value" id="val-mem">—</span>
+      </div>
+      <div class="health-chip" id="chip-uptime">
+        <span class="chip-icon">🕐</span>
+        <span class="chip-label">UP</span>
+        <span class="chip-value" id="val-uptime">—</span>
+      </div>
+      <div class="health-chip" id="chip-tx">
+        <span class="chip-icon">▲</span>
+        <span class="chip-label">TX</span>
+        <span class="chip-value" id="val-tx">—</span>
+      </div>
+      <div class="health-chip" id="chip-rx">
+        <span class="chip-icon">▼</span>
+        <span class="chip-label">RX</span>
+        <span class="chip-value" id="val-rx">—</span>
+      </div>
+    </div>
+
+    <!-- Main content area -->
+    <main id="main-content">
+      <!-- Panels rendered by JS -->
+    </main>
+
+    <!-- Bottom tab bar (mobile) / Sidebar (desktop) -->
+    <nav id="tab-bar">
+      <button class="tab-btn active" data-tab="health" id="tab-health">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span>Health</span>
+      </button>
+      <button class="tab-btn" data-tab="active" id="tab-active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Active</span>
+      </button>
+      <button class="tab-btn" data-tab="users" id="tab-users">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <span>Users</span>
+      </button>
+      <button class="tab-btn" data-tab="hosts" id="tab-hosts">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        <span>Hosts</span>
+      </button>
+    </nav>
+
+    <!-- Modal overlay -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal-card" id="modal-card">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

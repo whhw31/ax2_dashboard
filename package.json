@@ -1,0 +1,22 @@
+{
+  "name": "ax2-dashboard",
+  "version": "1.0.0",
+  "description": "MikroTik hAP ax2 Real-Time Dashboard",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"node server.js\" \"vite --host\"",
+    "dev:server": "node server.js",
+    "dev:client": "vite --host",
+    "build": "vite build",
+    "start": "NODE_ENV=production node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "vite": "^6.2.4"
+  }
+}
