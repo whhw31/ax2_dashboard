@@ -37,6 +37,12 @@ app.use((req, res, next) => {
   res.status(401).send('Authentication required.');
 });
 
+// ── Logout ─────────────────────────────────────────────────────
+app.get('/api/logout', (req, res) => {
+  res.set('WWW-Authenticate', 'Basic realm="MikroTik Dashboard"');
+  res.status(401).send('Logged out.');
+});
+
 // ── Router Config ──────────────────────────────────────────────
 const ROUTER = {
   ip: process.env.ROUTER_IP || '10.10.10.1',

@@ -7,11 +7,12 @@ import { api } from '../api.js';
 import { showProfileModal, showConfirmModal, showAddUserModal, showEditUserModal } from './actions.js';
 
 // ── State ──────────────────────────────────────────────────────
-let currentSort = 'download'; // download | upload | time | name
+let currentSort = 'rate'; // rate | download | upload | time | name
 let searchQuery = '';
 let usersSearchQuery = '';
 let cachedProfiles = [];
 let cachedUsers = [];
+let previousActiveData = new Map(); // Store {bytesIn, bytesOut, timestamp} per session id
 
 // Load profiles and users once
 api.getProfiles().then(p => { cachedProfiles = p; }).catch(() => {});
@@ -31,8 +32,9 @@ export function renderActive(container) {
       <input type="text" placeholder="Search by name, comment, IP…" id="active-search" value="${escapeHtml(searchQuery)}" />
     </div>
     <div class="section-sort" style="margin-bottom:var(--space-md)">
-      <button class="sort-btn ${currentSort === 'download' ? 'active' : ''}" data-sort="download">▼ Download</button>
-      <button class="sort-btn ${currentSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Upload</button>
+      <button class="sort-btn ${currentSort === 'rate' ? 'active' : ''}" data-sort="rate">⚡ Rate</button>
+      <button class="sort-btn ${currentSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
+      <button class="sort-btn ${currentSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
       <button class="sort-btn ${currentSort === 'time' ? 'active' : ''}" data-sort="time">🕐 Time</button>
       <button class="sort-btn ${currentSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
     </div>
@@ -78,9 +80,39 @@ export function updateActive(data) {
     });
   }
 
+  const now = data.timestamp || Date.now();
+
+  // Compute rates
+  sessions.forEach(s => {
+    const id = s['.id'];
+    const prev = previousActiveData.get(id);
+    const currIn = parseInt(s['bytes-in'] || 0);
+    const currOut = parseInt(s['bytes-out'] || 0);
+
+    if (prev && prev.timestamp < now) {
+      const dt = (now - prev.timestamp) / 1000; // seconds
+      // bits per second
+      s._rateIn = Math.max(0, (currIn - prev.bytesIn) * 8 / dt);
+      s._rateOut = Math.max(0, (currOut - prev.bytesOut) * 8 / dt);
+    } else {
+      s._rateIn = 0;
+      s._rateOut = 0;
+    }
+
+    // Update history
+    previousActiveData.set(id, { bytesIn: currIn, bytesOut: currOut, timestamp: now });
+  });
+
+  // Cleanup old previous data (sessions no longer present)
+  const currentIds = new Set(data.active.map(s => s['.id']));
+  for (const id of previousActiveData.keys()) {
+    if (!currentIds.has(id)) previousActiveData.delete(id);
+  }
+
   // Sort
   sessions.sort((a, b) => {
     switch (currentSort) {
+      case 'rate': return (b._rateOut + b._rateIn) - (a._rateOut + a._rateIn);
       case 'download': return (parseInt(b['bytes-out'] || 0)) - (parseInt(a['bytes-out'] || 0));
       case 'upload': return (parseInt(b['bytes-in'] || 0)) - (parseInt(a['bytes-in'] || 0));
       case 'time': {
@@ -134,15 +166,23 @@ export function updateActive(data) {
         </div>
         <div class="session-stats">
           <div class="session-stat">
+            <span class="stat-label">Download Rate</span>
+            <span class="stat-value download">▼ ${formatBps(session._rateOut)}</span>
+          </div>
+          <div class="session-stat">
+            <span class="stat-label">Upload Rate</span>
+            <span class="stat-value upload">▲ ${formatBps(session._rateIn)}</span>
+          </div>
+          <div class="session-stat">
             <span class="stat-label">Downloaded</span>
-            <span class="stat-value download">${formatBytes(downloaded)}</span>
+            <span class="stat-value" style="opacity:0.8; font-size:12px">${formatBytes(downloaded)}</span>
           </div>
           <div class="session-stat">
             <span class="stat-label">Uploaded</span>
-            <span class="stat-value upload">${formatBytes(uploaded)}</span>
+            <span class="stat-value" style="opacity:0.8; font-size:12px">${formatBytes(uploaded)}</span>
           </div>
           <div class="session-stat">
-            <span class="stat-label">Session Time</span>
+            <span class="stat-label">Uptime</span>
             <span class="stat-value time">${formatUptime(session.uptime)}</span>
           </div>
           <div class="session-stat">

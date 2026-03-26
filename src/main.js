@@ -12,7 +12,27 @@ const mainContent = document.getElementById('main-content');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const statusDot = document.querySelector('.status-dot');
 const statusLabel = document.querySelector('.status-label');
+const logoutBtn = document.getElementById('logout-btn');
 const fab = createFab();
+
+// ── Inactivity tracking (5 min) ──────────────────────────────
+let lastActivityTime = Date.now();
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+function resetInactivity() {
+  lastActivityTime = Date.now();
+}
+
+['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(type => {
+  window.addEventListener(type, resetInactivity, { passive: true });
+});
+
+setInterval(() => {
+  if (Date.now() - lastActivityTime > INACTIVITY_TIMEOUT) {
+    console.log('[Inactivity] Auto-logging out…');
+    logout();
+  }
+}, 30000); // Check every 30s
 
 // ── Tab Navigation ─────────────────────────────────────────────
 tabButtons.forEach(btn => {
@@ -22,6 +42,21 @@ tabButtons.forEach(btn => {
     switchTab(tab);
   });
 });
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to logout from the dashboard?')) {
+      logout();
+    }
+  });
+}
+
+function logout() {
+  if (eventSource) eventSource.close();
+  // We navigate to /api/logout which forces a 401 prompt. 
+  // If user cancels, they are logged out in most browsers.
+  window.location.href = '/api/logout';
+}
 
 function switchTab(tab) {
   currentTab = tab;
@@ -129,8 +164,11 @@ function connectSSE() {
 }
 
 // ── Health Strip (always visible) ──────────────────────────────
+let lastStripData = null;
+
 function updateStrip(data) {
-  const { resource, interfaces, active } = data;
+  const { resource, interfaces, active, timestamp } = data;
+  const now = timestamp || Date.now();
 
   // CPU
   const cpuEl = document.getElementById('val-cpu');
@@ -146,17 +184,30 @@ function updateStrip(data) {
 
   // Total TX/RX from all interfaces
   if (Array.isArray(interfaces)) {
-    let totalTx = 0;
-    let totalRx = 0;
+    let totalTxBytes = 0;
+    let totalRxBytes = 0;
     interfaces.forEach(iface => {
-      totalTx += parseInt(iface['tx-byte'] || 0);
-      totalRx += parseInt(iface['rx-byte'] || 0);
+      totalTxBytes += parseInt(iface['tx-byte'] || 0);
+      totalRxBytes += parseInt(iface['rx-byte'] || 0);
     });
+
+    // Calculate throughput bits per second
+    let txRate = 0;
+    let rxRate = 0;
+    if (lastStripData && lastStripData.timestamp < now) {
+      const dt = (now - lastStripData.timestamp) / 1000;
+      txRate = Math.max(0, (totalTxBytes - lastStripData.tx) * 8 / dt);
+      rxRate = Math.max(0, (totalRxBytes - lastStripData.rx) * 8 / dt);
+    }
 
     const txEl = document.getElementById('val-tx');
     const rxEl = document.getElementById('val-rx');
-    if (txEl) txEl.textContent = formatBytes(totalTx);
-    if (rxEl) rxEl.textContent = formatBytes(totalRx);
+    
+    // We show RATE (bps) instead of just cumulative bytes, as it's more useful in a "live" strip
+    if (txEl) txEl.textContent = formatBps(txRate);
+    if (rxEl) rxEl.textContent = formatBps(rxRate);
+
+    lastStripData = { tx: totalTxBytes, rx: totalRxBytes, timestamp: now };
   }
 }
 

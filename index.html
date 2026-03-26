@@ -23,10 +23,15 @@
         <h1 class="topbar-title">ax2 Dashboard</h1>
       </div>
       <div class="topbar-right">
-        <div class="connection-status" id="connection-status">
+        <div class="connection-status" id="connection-status" style="margin-right: var(--space-md)">
           <span class="status-dot"></span>
           <span class="status-label">Connecting…</span>
         </div>
+        <button id="logout-btn" class="btn btn-ghost btn-sm" title="Logout" style="color:var(--text-primary); padding: 6px; border-radius: 50%">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
       </div>
     </header>
 
