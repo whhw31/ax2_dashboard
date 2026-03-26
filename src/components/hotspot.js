@@ -338,7 +338,13 @@ window.__speedAction = async (username, activeId) => {
     
     showProfileModal(username, user.profile, cachedProfiles, async (newProfile) => {
       try {
-        await api.updateUser(user['.id'], { profile: newProfile });
+        const payload = { 
+          profile: newProfile,
+          name: user.name
+        };
+        if (user['mac-address']) payload['mac-address'] = user['mac-address'];
+        
+        await api.updateUser(user['.id'], payload);
         // Force the router to apply the profile immediately by terminating their active session
         // They will silently re-authenticate in the background using MAC cookies/saved creds and pull the new limits.
         await api.disconnect(activeId);
@@ -374,7 +380,13 @@ window.__speedUserAction = async (username, userId) => {
     const user = cachedUsers.find(u => u['.id'] === userId);
     showProfileModal(username, user?.profile, cachedProfiles, async (newProfile) => {
       try {
-        await api.updateUser(userId, { profile: newProfile });
+        const payload = { 
+          profile: newProfile,
+          name: user.name
+        };
+        if (user['mac-address']) payload['mac-address'] = user['mac-address'];
+        
+        await api.updateUser(userId, payload);
         showToast(`Profile saved for ${username}`, 'success');
         
         // Disconnect if active so new profile applies instantly

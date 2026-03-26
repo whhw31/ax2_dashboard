@@ -217,6 +217,9 @@ export function showEditUserModal(user, profiles, onConfirm) {
     if (limitBytes) updates['limit-bytes-total'] = limitBytes;
     else if (user['limit-bytes-total']) updates['limit-bytes-total'] = '0'; // MikroTik clearing value might be 0/unset
     
+    // Always include name to prevent RouterOS bugs where mac-address drops on update
+    updates.name = user.name;
+    
     closeModal();
     onConfirm(updates);
   });
