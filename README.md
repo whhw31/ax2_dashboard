@@ -32,8 +32,8 @@ Built uniquely as an interface strictly over the modern MikroTik REST API, avoid
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/mikrotik-hotspot-dashboard.git
-   cd mikrotik-hotspot-dashboard
+   git clone https://github.com/whhw31/ax2_dashboard.git
+   cd ax2_dashboard
    ```
 
 2. Install dependencies:
