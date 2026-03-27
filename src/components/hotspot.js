@@ -1,7 +1,7 @@
 // ── Hotspot Component — Active Sessions, Users, Hosts ───────────
 import {
   formatBytes, formatUptime, formatBps, stringToColor, getInitials,
-  escapeHtml, showToast
+  escapeHtml, showToast, formatRateLimit
 } from '../utils.js';
 import { api } from '../api.js';
 import { showProfileModal, showConfirmModal, showAddUserModal, showEditUserModal } from './actions.js';
@@ -160,6 +160,34 @@ export function updateActive(data) {
     const id = session['.id'];
     const comment = session.comment || cachedUsers.find(u => u.name === user)?.comment || '';
 
+    // ── Resolve assigned speed ──────────────────────────────
+    const userRecord = cachedUsers.find(u => u.name === user);
+    const profileName = userRecord?.profile || 'default';
+    const profileRecord = cachedProfiles.find(p => p.name === profileName);
+    // User-level rate-limit overrides profile-level
+    const rawRateLimit = userRecord?.['rate-limit'] || profileRecord?.['rate-limit'] || '';
+    const speedInfo = formatRateLimit(rawRateLimit);
+
+    // Build the speed badge HTML
+    let speedBadgeHtml = '';
+    if (speedInfo && typeof speedInfo === 'object') {
+      speedBadgeHtml = `
+        <div class="speed-badge">
+          <span class="speed-badge-label">⚡ ${escapeHtml(profileName)}</span>
+          <span class="speed-badge-values">
+            <span class="speed-down">▼ ${speedInfo.download}</span>
+            <span class="speed-sep">·</span>
+            <span class="speed-up">▲ ${speedInfo.upload}</span>
+          </span>
+        </div>`;
+    } else {
+      speedBadgeHtml = `
+        <div class="speed-badge speed-badge--unlimited">
+          <span class="speed-badge-label">⚡ ${escapeHtml(profileName)}</span>
+          <span class="speed-badge-values">Unlimited</span>
+        </div>`;
+    }
+
     return `
       <div class="glass-card session-card" data-id="${escapeHtml(id)}">
         <div class="session-header">
@@ -172,6 +200,7 @@ export function updateActive(data) {
             </div>
           </div>
         </div>
+        ${speedBadgeHtml}
         <div class="session-stats">
           <div class="session-stat">
             <span class="stat-label">Download Rate</span>

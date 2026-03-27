@@ -504,6 +504,74 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Speed Badge (Active Sessions) ─────────────────────────────── */
+.speed-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 6px 12px;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(139, 92, 246, 0.18));
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  font-size: 11px;
+  font-weight: 600;
+  animation: speed-badge-in 0.3s ease-out;
+}
+
+.speed-badge--unlimited {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(16, 185, 129, 0.14));
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.speed-badge-label {
+  color: var(--accent-purple);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.speed-badge--unlimited .speed-badge-label {
+  color: var(--accent-green);
+}
+
+.speed-badge-values {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.speed-badge--unlimited .speed-badge-values {
+  color: var(--accent-green);
+  opacity: 0.8;
+}
+
+.speed-down {
+  color: var(--accent-green);
+}
+
+.speed-up {
+  color: var(--accent-orange);
+}
+
+.speed-sep {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+@keyframes speed-badge-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .session-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;

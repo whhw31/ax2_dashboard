@@ -112,6 +112,45 @@ export function showToast(message, type = 'success', duration = 3000) {
 }
 
 /**
+ * Format MikroTik rate-limit string to human-readable
+ * MikroTik format: "rx-rate/tx-rate" (upload/download from client perspective)
+ * e.g. "2M/5M" → "↓ 5 Mbps · ↑ 2 Mbps"
+ * Can also be more complex: "2M/5M 0/0 0/0 0/0 8 2M/5M"
+ */
+export function formatRateLimit(rateLimit) {
+  if (!rateLimit) return null;
+  // Take only the first rate pair (before any space for burst params)
+  const firstPart = rateLimit.trim().split(/\s+/)[0];
+  const parts = firstPart.split('/');
+  if (parts.length < 2) return rateLimit;
+
+  const parse = (s) => {
+    if (!s || s === '0') return 0;
+    const m = s.match(/^(\d+(?:\.\d+)?)\s*([kMG]?)$/i);
+    if (!m) return 0;
+    let val = parseFloat(m[1]);
+    const unit = m[2];
+    if (unit === 'k' || unit === 'K') val *= 1000;
+    else if (unit === 'M' || unit === 'm') val *= 1000000;
+    else if (unit === 'G' || unit === 'g') val *= 1000000000;
+    return val;
+  };
+
+  const fmt = (bps) => {
+    if (bps === 0) return 'Unlimited';
+    if (bps >= 1000000) return `${parseFloat((bps / 1000000).toFixed(1))} Mbps`;
+    if (bps >= 1000) return `${parseFloat((bps / 1000).toFixed(0))} Kbps`;
+    return `${bps} bps`;
+  };
+
+  const upload = parse(parts[0]);   // rx-rate = client upload
+  const download = parse(parts[1]); // tx-rate = client download
+
+  if (upload === 0 && download === 0) return null; // no limit = unlimited
+  return { download: fmt(download), upload: fmt(upload), raw: rateLimit };
+}
+
+/**
  * Debounce function
  */
 export function debounce(fn, ms = 300) {
