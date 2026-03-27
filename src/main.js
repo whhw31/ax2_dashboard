@@ -53,9 +53,12 @@ if (logoutBtn) {
 
 function logout() {
   if (eventSource) eventSource.close();
-  // We navigate to /api/logout which forces a 401 prompt. 
-  // If user cancels, they are logged out in most browsers.
-  window.location.href = '/api/logout';
+
+  // POST to clear the session cookie, then redirect to login
+  fetch('/api/logout', { method: 'POST' })
+    .finally(() => {
+      window.location.replace('/login?logged_out=1');
+    });
 }
 
 function switchTab(tab) {
