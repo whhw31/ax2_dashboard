@@ -211,6 +211,10 @@ export function updateActive(data) {
             <span class="stat-value upload">▲ ${formatBps(session._rateIn)}</span>
           </div>
           <div class="session-stat">
+            <span class="stat-label">Total Usage</span>
+            <span class="stat-value" style="font-weight:600; font-size:12px">${formatBytes(downloaded + uploaded)}</span>
+          </div>
+          <div class="session-stat">
             <span class="stat-label">Downloaded</span>
             <span class="stat-value" style="opacity:0.8; font-size:12px">${formatBytes(downloaded)}</span>
           </div>
@@ -341,6 +345,8 @@ function renderUsersList() {
           <span class="user-detail-value">${escapeHtml(user['mac-address'] || '—')}</span>
           <span class="user-detail-label">Data Limit</span>
           <span class="user-detail-value">${user['limit-bytes-total'] ? formatBytes(parseInt(user['limit-bytes-total'])) : 'Unlimited'}</span>
+          <span class="user-detail-label">Total Usage</span>
+          <span class="user-detail-value" style="font-weight:600;">${formatBytes(parseInt(user['bytes-out'] || 0) + parseInt(user['bytes-in'] || 0))}</span>
           <span class="user-detail-label">Downloaded</span>
           <span class="user-detail-value">${formatBytes(parseInt(user['bytes-out'] || 0))}</span>
           <span class="user-detail-label">Uploaded</span>
