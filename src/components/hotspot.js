@@ -7,7 +7,8 @@ import { api } from '../api.js';
 import { showProfileModal, showConfirmModal, showAddUserModal, showEditUserModal } from './actions.js';
 
 // ── State ──────────────────────────────────────────────────────
-let currentSort = 'rate'; // rate | download | upload | time | name
+let currentSort = 'rate'; // rate | download | upload | total | time | name
+let currentUsersSort = 'name'; // name | total | download | upload
 let searchQuery = '';
 let usersSearchQuery = '';
 let cachedProfiles = [];
@@ -33,6 +34,7 @@ export function renderActive(container) {
     </div>
     <div class="section-sort" style="margin-bottom:var(--space-md)">
       <button class="sort-btn ${currentSort === 'rate' ? 'active' : ''}" data-sort="rate">⚡ Rate</button>
+      <button class="sort-btn ${currentSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
       <button class="sort-btn ${currentSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
       <button class="sort-btn ${currentSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
       <button class="sort-btn ${currentSort === 'time' ? 'active' : ''}" data-sort="time">🕐 Time</button>
@@ -121,6 +123,11 @@ export function updateActive(data) {
   sessions.sort((a, b) => {
     switch (currentSort) {
       case 'rate': return (b._rateOut + b._rateIn) - (a._rateOut + a._rateIn);
+      case 'total': {
+        const aTotal = parseInt(a['bytes-out'] || 0) + parseInt(a['bytes-in'] || 0);
+        const bTotal = parseInt(b['bytes-out'] || 0) + parseInt(b['bytes-in'] || 0);
+        return bTotal - aTotal;
+      }
       case 'download': return (parseInt(b['bytes-out'] || 0)) - (parseInt(a['bytes-out'] || 0));
       case 'upload': return (parseInt(b['bytes-in'] || 0)) - (parseInt(a['bytes-in'] || 0));
       case 'time': {
@@ -257,10 +264,26 @@ export function renderUsers(container) {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" placeholder="Search users by name, comment, or profile…" id="users-search" value="${escapeHtml(usersSearchQuery)}" />
     </div>
+    <div class="section-sort" style="margin-bottom:var(--space-md)">
+      <button class="sort-users-btn ${currentUsersSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
+      <button class="sort-users-btn ${currentUsersSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
+      <button class="sort-users-btn ${currentUsersSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
+      <button class="sort-users-btn ${currentUsersSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
+    </div>
     <div id="users-list">
       <div class="skeleton" style="height:200px"></div>
     </div>
   `;
+
+  // Sort buttons
+  container.querySelectorAll('.sort-users-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentUsersSort = btn.dataset.sort;
+      container.querySelectorAll('.sort-users-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderUsersList();
+    });
+  });
 
   // Search
   const searchInput = container.querySelector('#users-search');
@@ -315,6 +338,21 @@ function renderUsersList() {
       (u.comment || '').toLowerCase().includes(usersSearchQuery)
     );
   }
+
+  // Sort
+  users.sort((a, b) => {
+    switch (currentUsersSort) {
+      case 'name': return (a.name || '').localeCompare(b.name || '');
+      case 'total': {
+        const aTotal = parseInt(a['bytes-out'] || 0) + parseInt(a['bytes-in'] || 0);
+        const bTotal = parseInt(b['bytes-out'] || 0) + parseInt(b['bytes-in'] || 0);
+        return bTotal - aTotal;
+      }
+      case 'download': return parseInt(b['bytes-out'] || 0) - parseInt(a['bytes-out'] || 0);
+      case 'upload': return parseInt(b['bytes-in'] || 0) - parseInt(a['bytes-in'] || 0);
+      default: return 0;
+    }
+  });
 
   if (users.length === 0) {
     listEl.innerHTML = `
