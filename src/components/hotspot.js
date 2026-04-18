@@ -265,10 +265,12 @@ export function renderUsers(container) {
       <input type="text" placeholder="Search users by name, comment, or profile…" id="users-search" value="${escapeHtml(usersSearchQuery)}" />
     </div>
     <div class="section-sort" style="margin-bottom:var(--space-md)">
-      <button class="sort-users-btn ${currentUsersSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
-      <button class="sort-users-btn ${currentUsersSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
-      <button class="sort-users-btn ${currentUsersSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
-      <button class="sort-users-btn ${currentUsersSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
+      <button class="sort-btn ${currentUsersSort === 'rate' ? 'active' : ''}" data-sort="rate">⚡ Rate</button>
+      <button class="sort-btn ${currentUsersSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
+      <button class="sort-btn ${currentUsersSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
+      <button class="sort-btn ${currentUsersSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
+      <button class="sort-btn ${currentUsersSort === 'time' ? 'active' : ''}" data-sort="time">🕐 Time</button>
+      <button class="sort-btn ${currentUsersSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
     </div>
     <div id="users-list">
       <div class="skeleton" style="height:200px"></div>
@@ -276,10 +278,10 @@ export function renderUsers(container) {
   `;
 
   // Sort buttons
-  container.querySelectorAll('.sort-users-btn').forEach(btn => {
+  container.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       currentUsersSort = btn.dataset.sort;
-      container.querySelectorAll('.sort-users-btn').forEach(b => b.classList.remove('active'));
+      container.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderUsersList();
     });
@@ -342,6 +344,18 @@ function renderUsersList() {
   // Sort
   users.sort((a, b) => {
     switch (currentUsersSort) {
+      case 'rate': {
+        // Users don't have a live rate, but we can try to find their active session if we want, or just fallback to 0.
+        // If they are active, use window.__lastStreamData.active.
+        let aRate = 0, bRate = 0;
+        if (window.__lastStreamData && window.__lastStreamData.active) {
+            const aAct = window.__lastStreamData.active.find(s => s.user === a.name);
+            const bAct = window.__lastStreamData.active.find(s => s.user === b.name);
+            if (aAct) aRate = (aAct._rateIn || 0) + (aAct._rateOut || 0);
+            if (bAct) bRate = (bAct._rateIn || 0) + (bAct._rateOut || 0);
+        }
+        return bRate - aRate;
+      }
       case 'name': return (a.name || '').localeCompare(b.name || '');
       case 'total': {
         const aTotal = parseInt(a['bytes-out'] || 0) + parseInt(a['bytes-in'] || 0);
@@ -350,6 +364,11 @@ function renderUsersList() {
       }
       case 'download': return parseInt(b['bytes-out'] || 0) - parseInt(a['bytes-out'] || 0);
       case 'upload': return parseInt(b['bytes-in'] || 0) - parseInt(a['bytes-in'] || 0);
+      case 'time': {
+        const aUp = parseUptime(a.uptime);
+        const bUp = parseUptime(b.uptime);
+        return bUp - aUp;
+      }
       default: return 0;
     }
   });
