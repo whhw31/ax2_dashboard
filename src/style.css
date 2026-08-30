@@ -1274,6 +1274,26 @@ body {
   .user-card-expand { padding-left: 9px; padding-right: 9px; }
 }
 
+.session-card-expand,
+.user-card-expand {
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  transition: max-height var(--transition-slow), opacity var(--transition-normal), padding var(--transition-slow);
+}
+.session-card.is-expanded .session-card-expand,
+.user-card.is-expanded .user-card-expand {
+  max-height: 520px;
+  opacity: 1;
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.session-card-expand > *,
+.user-card-expand > * { min-height: auto; overflow: visible; }
+
 @media (min-width: 1200px) {
   #main-content {
     max-width: 1100px;
