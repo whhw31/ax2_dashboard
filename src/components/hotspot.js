@@ -13,6 +13,8 @@ let searchQuery = '';
 let usersSearchQuery = '';
 let cachedProfiles = [];
 let cachedUsers = [];
+let expandedUserId = null;
+let expandedActiveId = null;
 let previousActiveData = new Map(); // Store {bytesIn, bytesOut, timestamp} per session id
 
 // Load profiles and users once
@@ -64,6 +66,27 @@ export function renderActive(container) {
       if (window.__lastStreamData) updateActive(window.__lastStreamData);
     });
   }
+
+  const activeList = container.querySelector('#active-list');
+  activeList?.addEventListener('click', (event) => {
+    if (event.target.closest('button, a, input, select')) return;
+    const sessionCard = event.target.closest('.session-card');
+    if (!sessionCard) return;
+    const id = sessionCard.dataset.sessionId;
+    expandedActiveId = expandedActiveId === id ? null : id;
+    updateActive(window.__lastStreamData || { active: [] });
+  });
+
+  // Keep keyboard users able to expand a session card.
+  activeList?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const sessionCard = event.target.closest('.session-card');
+    if (!sessionCard) return;
+    event.preventDefault();
+    const id = sessionCard.dataset.sessionId;
+    expandedActiveId = expandedActiveId === id ? null : id;
+    updateActive(window.__lastStreamData || { active: [] });
+  });
 }
 
 export function updateActive(data) {
@@ -159,19 +182,20 @@ export function updateActive(data) {
 
   listEl.innerHTML = sessions.map(session => {
     const user = session.user || 'unknown';
-    const color = stringToColor(user);
-    const initial = getInitials(user);
+    const userRecord = cachedUsers.find(u => u.name === user);
+    const comment = session.comment || userRecord?.comment || '';
+    const displayName = comment || user;
+    const isExpanded = expandedActiveId === session['.id'];
+    const color = stringToColor(displayName);
+    const initial = getInitials(displayName);
     // From the Router's perspective: TX (out) is Client Download, RX (in) is Client Upload
     const downloaded = parseInt(session['bytes-out'] || 0);
     const uploaded = parseInt(session['bytes-in'] || 0);
     const id = session['.id'];
-    const comment = session.comment || cachedUsers.find(u => u.name === user)?.comment || '';
 
-    // ── Resolve assigned speed ──────────────────────────────
-    const userRecord = cachedUsers.find(u => u.name === user);
+    // User-level rate-limit overrides profile-level
     const profileName = userRecord?.profile || 'default';
     const profileRecord = cachedProfiles.find(p => p.name === profileName);
-    // User-level rate-limit overrides profile-level
     const rawRateLimit = userRecord?.['rate-limit'] || profileRecord?.['rate-limit'] || '';
     const speedInfo = formatRateLimit(rawRateLimit);
 
@@ -196,53 +220,40 @@ export function updateActive(data) {
     }
 
     return `
-      <div class="glass-card session-card" data-id="${escapeHtml(id)}">
-        <div class="session-header">
+      <article class="glass-card session-card ${isExpanded ? 'is-expanded' : ''}" data-session-id="${escapeHtml(id)}" tabindex="0" aria-expanded="${isExpanded}">
+        <div class="session-card-summary">
           <div class="session-user">
             <div class="session-avatar" style="background:${color}">${initial}</div>
-            <div>
-              <div class="session-name">${escapeHtml(user)}</div>
-              ${comment ? `<div style="font-size:12px;color:var(--accent-blue);font-weight:600;margin-bottom:2px">${escapeHtml(comment)}</div>` : ''}
-              <div class="session-ip">${escapeHtml(session.address || '—')} · ${escapeHtml(session['mac-address'] || '—')}</div>
+            <div class="session-identity">
+              <div class="session-name">${escapeHtml(displayName)}</div>
+              <div class="session-subline">${comment ? `MAC user: ${escapeHtml(user)}` : `MAC: ${escapeHtml(session['mac-address'] || '—')}`}</div>
             </div>
           </div>
+          <div class="session-card-metrics">
+            <span class="session-live"><i></i>Online</span>
+            <strong>▼ ${formatBps(session._rateOut)}</strong>
+            <span>▲ ${formatBps(session._rateIn)} · ${formatUptime(session.uptime)}</span>
+          </div>
+          <span class="user-card-chevron" aria-hidden="true">⌄</span>
         </div>
-        ${speedBadgeHtml}
-        <div class="session-stats">
-          <div class="session-stat">
-            <span class="stat-label">Download Rate</span>
-            <span class="stat-value download">▼ ${formatBps(session._rateOut)}</span>
+        <div class="session-card-expand">
+          ${speedBadgeHtml}
+          <div class="session-stats">
+            <div class="session-stat"><span class="stat-label">IP Address</span><span class="stat-value">${escapeHtml(session.address || '—')}</span></div>
+            <div class="session-stat"><span class="stat-label">MAC Address</span><span class="stat-value">${escapeHtml(session['mac-address'] || '—')}</span></div>
+            <div class="session-stat"><span class="stat-label">Download Rate</span><span class="stat-value download">▼ ${formatBps(session._rateOut)}</span></div>
+            <div class="session-stat"><span class="stat-label">Upload Rate</span><span class="stat-value upload">▲ ${formatBps(session._rateIn)}</span></div>
+            <div class="session-stat"><span class="stat-label">Total Usage</span><span class="stat-value">${formatBytes(downloaded + uploaded)}</span></div>
+            <div class="session-stat"><span class="stat-label">Downloaded</span><span class="stat-value">${formatBytes(downloaded)}</span></div>
+            <div class="session-stat"><span class="stat-label">Uploaded</span><span class="stat-value">${formatBytes(uploaded)}</span></div>
+            <div class="session-stat"><span class="stat-label">Idle</span><span class="stat-value">${formatUptime(session['idle-time']) || '—'}</span></div>
           </div>
-          <div class="session-stat">
-            <span class="stat-label">Upload Rate</span>
-            <span class="stat-value upload">▲ ${formatBps(session._rateIn)}</span>
-          </div>
-          <div class="session-stat">
-            <span class="stat-label">Total Usage</span>
-            <span class="stat-value" style="font-weight:600; font-size:12px">${formatBytes(downloaded + uploaded)}</span>
-          </div>
-          <div class="session-stat">
-            <span class="stat-label">Downloaded</span>
-            <span class="stat-value" style="opacity:0.8; font-size:12px">${formatBytes(downloaded)}</span>
-          </div>
-          <div class="session-stat">
-            <span class="stat-label">Uploaded</span>
-            <span class="stat-value" style="opacity:0.8; font-size:12px">${formatBytes(uploaded)}</span>
-          </div>
-          <div class="session-stat">
-            <span class="stat-label">Uptime</span>
-            <span class="stat-value time">${formatUptime(session.uptime)}</span>
-          </div>
-          <div class="session-stat">
-            <span class="stat-label">Idle</span>
-            <span class="stat-value">${formatUptime(session['idle-time']) || '—'}</span>
+          <div class="session-actions">
+            <button class="btn btn-speed btn-sm" onclick="window.__speedAction('${escapeHtml(user)}', '${escapeHtml(id)}')">⚡ Limit</button>
+            <button class="btn btn-cut btn-sm" onclick="window.__cutAction('${escapeHtml(user)}', '${escapeHtml(id)}')">✂ Cut</button>
           </div>
         </div>
-        <div class="session-actions">
-          <button class="btn btn-speed btn-sm" onclick="window.__speedAction('${escapeHtml(user)}', '${escapeHtml(id)}')">⚡ Limit</button>
-          <button class="btn btn-cut btn-sm" onclick="window.__cutAction('${escapeHtml(user)}', '${escapeHtml(id)}')">✂ Cut</button>
-        </div>
-      </div>`;
+      </article>`;
   }).join('');
 }
 
@@ -295,6 +306,17 @@ export function renderUsers(container) {
       renderUsersList();
     });
   }
+
+  // Expand/collapse cards without adding page height until needed
+  const usersList = container.querySelector('#users-list');
+  usersList?.addEventListener('click', (event) => {
+    if (event.target.closest('button, a, input, select')) return;
+    const userCard = event.target.closest('.user-card');
+    if (!userCard) return;
+    const id = userCard.dataset.userId;
+    expandedUserId = expandedUserId === id ? null : id;
+    renderUsersList();
+  });
 
   // Fetch users
   loadUsers();
@@ -385,38 +407,61 @@ function renderUsersList() {
   listEl.innerHTML = users.map(user => {
     const id = user['.id'];
     const name = user.name || '—';
-    const hasLimit = user['rate-limit'] && user['rate-limit'] !== '';
+    const displayName = user.comment || name;
+    const secondaryLabel = user.comment ? name : (user.profile || 'Hotspot user');
+    const isExpanded = expandedUserId === id;
+    const total = parseInt(user['bytes-out'] || 0) + parseInt(user['bytes-in'] || 0);
+    const limit = parseInt(user['limit-bytes-total'] || 0);
+    const usagePercent = limit > 0 ? Math.min(100, Math.round((total / limit) * 100)) : 0;
+    const active = window.__lastStreamData?.active?.some(s => s.user === name);
 
     return `
-      <div class="glass-card user-card">
-        <div class="user-meta">
-          <div class="session-avatar" style="background:${stringToColor(name)}">${getInitials(name)}</div>
-          <div>
-            <div class="user-name">${escapeHtml(name)}</div>
-            ${user.comment ? `<div style="font-size:12px;color:var(--accent-blue);font-weight:600;margin-bottom:4px">${escapeHtml(user.comment)}</div>` : ''}
-            ${user.profile ? `<span class="user-profile-badge">${escapeHtml(user.profile)}</span>` : ''}
+      <article class="glass-card user-card ${isExpanded ? 'is-expanded' : ''}" data-user-id="${escapeHtml(id)}" tabindex="0" aria-expanded="${isExpanded}">
+        <div class="user-card-summary">
+          <div class="user-meta">
+            <div class="session-avatar" style="background:${stringToColor(displayName)}">${getInitials(displayName)}</div>
+            <div class="user-card-identity">
+              <div class="user-name">${escapeHtml(displayName)}</div>
+              <div class="user-subline">${escapeHtml(secondaryLabel)}</div>
+            </div>
+          </div>
+          <div class="user-card-metrics">
+            <span class="user-online ${active ? 'online' : ''}"><i></i>${active ? 'Online' : 'Offline'}</span>
+            <strong>${formatBytes(total)}</strong>
+            <span>${limit ? `${usagePercent}% of ${formatBytes(limit)}` : 'Unlimited'}</span>
+          </div>
+          <span class="user-card-chevron" aria-hidden="true">⌄</span>
+        </div>
+        ${limit ? `<div class="user-usage-bar"><span style="width:${usagePercent}%"></span></div>` : ''}
+        <div class="user-card-expand">
+          <div class="user-details">
+            <span class="user-detail-label">MAC Address</span>
+            <span class="user-detail-value">${escapeHtml(user['mac-address'] || '—')}</span>
+            <span class="user-detail-label">Data Limit</span>
+            <span class="user-detail-value">${limit ? formatBytes(limit) : 'Unlimited'}</span>
+            <span class="user-detail-label">Downloaded</span>
+            <span class="user-detail-value">${formatBytes(parseInt(user['bytes-out'] || 0))}</span>
+            <span class="user-detail-label">Uploaded</span>
+            <span class="user-detail-value">${formatBytes(parseInt(user['bytes-in'] || 0))}</span>
+          </div>
+          <div class="user-actions">
+            <button class="btn btn-speed btn-sm" onclick="window.__editUser('${escapeHtml(id)}')">✏️ Edit</button>
+            <button class="btn btn-sm btn-success" onclick="window.__speedUserAction('${escapeHtml(name)}', '${escapeHtml(id)}')">⚡ Speed</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.__resetCounters('${escapeHtml(name)}', '${escapeHtml(id)}')">🔄 Reset</button>
+            <button class="btn btn-danger btn-sm" onclick="window.__deleteUser('${escapeHtml(name)}', '${escapeHtml(id)}')">🗑 Delete</button>
           </div>
         </div>
-        <div class="user-details">
-          <span class="user-detail-label">MAC Address</span>
-          <span class="user-detail-value">${escapeHtml(user['mac-address'] || '—')}</span>
-          <span class="user-detail-label">Data Limit</span>
-          <span class="user-detail-value">${user['limit-bytes-total'] ? formatBytes(parseInt(user['limit-bytes-total'])) : 'Unlimited'}</span>
-          <span class="user-detail-label">Total Usage</span>
-          <span class="user-detail-value" style="font-weight:600;">${formatBytes(parseInt(user['bytes-out'] || 0) + parseInt(user['bytes-in'] || 0))}</span>
-          <span class="user-detail-label">Downloaded</span>
-          <span class="user-detail-value">${formatBytes(parseInt(user['bytes-out'] || 0))}</span>
-          <span class="user-detail-label">Uploaded</span>
-          <span class="user-detail-value">${formatBytes(parseInt(user['bytes-in'] || 0))}</span>
-        </div>
-        <div class="user-actions">
-          <button class="btn btn-speed btn-sm" onclick="window.__editUser('${escapeHtml(id)}')">✏️ Edit</button>
-          <button class="btn btn-sm btn-success" onclick="window.__speedUserAction('${escapeHtml(name)}', '${escapeHtml(id)}')">⚡ Speed</button>
-          <button class="btn btn-secondary btn-sm" onclick="window.__resetCounters('${escapeHtml(name)}', '${escapeHtml(id)}')">🔄 Reset</button>
-          <button class="btn btn-danger btn-sm" onclick="window.__deleteUser('${escapeHtml(name)}', '${escapeHtml(id)}')">🗑 Delete</button>
-        </div>
-      </div>`;
+      </article>`;
   }).join('');
+
+  listEl.querySelectorAll('.user-card').forEach(card => {
+    card.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      expandedUserId = expandedUserId === card.dataset.userId ? null : card.dataset.userId;
+      renderUsersList();
+    });
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
