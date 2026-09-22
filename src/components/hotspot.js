@@ -29,6 +29,7 @@ export function renderActive(container) {
   container.innerHTML = `
     <div class="section-header">
       <h2 class="section-title">Active Sessions<span class="section-count" id="active-count">0</span></h2>
+      <button class="btn btn-danger btn-sm" id="restart-hotspot-btn" onclick="window.__restartHotspot()">↻ Restart Hotspot</button>
     </div>
     <div class="search-bar">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -408,7 +409,7 @@ function renderUsersList() {
     const id = user['.id'];
     const name = user.name || '—';
     const displayName = user.comment || name;
-    const secondaryLabel = user.comment ? name : (user.profile || 'Hotspot user');
+    const profileName = user.profile || 'default';
     const isExpanded = expandedUserId === id;
     const total = parseInt(user['bytes-out'] || 0) + parseInt(user['bytes-in'] || 0);
     const limit = parseInt(user['limit-bytes-total'] || 0);
@@ -422,7 +423,9 @@ function renderUsersList() {
             <div class="session-avatar" style="background:${stringToColor(displayName)}">${getInitials(displayName)}</div>
             <div class="user-card-identity">
               <div class="user-name">${escapeHtml(displayName)}</div>
-              <div class="user-subline">${escapeHtml(secondaryLabel)}</div>
+              <div class="user-subline">
+                <span class="user-profile-badge" title="Current profile">⚡ ${escapeHtml(profileName)}</span>
+              </div>
             </div>
           </div>
           <div class="user-card-metrics">
@@ -578,6 +581,37 @@ window.__cutAction = (username, activeId) => {
         showToast(`${username} disconnected`, 'success');
       } catch (err) {
         showToast('Failed to disconnect: ' + err.message, 'error');
+      }
+    }
+  );
+};
+
+// Restart enabled hotspot servers to clear stalled connections
+window.__restartHotspot = () => {
+  showConfirmModal(
+    'Restart Hotspot Server?',
+    'This will briefly disable and re-enable the hotspot server. All connected clients will be disconnected and may need to reconnect.',
+    async () => {
+      const button = document.getElementById('restart-hotspot-btn');
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Restarting…';
+      }
+
+      try {
+        const result = await api.restartHotspot();
+        previousActiveData.clear();
+        expandedActiveId = null;
+        const count = result.restarted || 1;
+        showToast(`Hotspot restarted (${count} server${count === 1 ? '' : 's'}). Connections are refreshing.`, 'success');
+      } catch (err) {
+        showToast('Failed to restart hotspot: ' + err.message, 'error');
+      } finally {
+        const currentButton = document.getElementById('restart-hotspot-btn');
+        if (currentButton) {
+          currentButton.disabled = false;
+          currentButton.textContent = '↻ Restart Hotspot';
+        }
       }
     }
   );

@@ -479,6 +479,52 @@ app.post('/api/hotspot/disconnect', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Hotspot — Restart enabled servers to clear stalled connections
+app.post('/api/hotspot/restart', async (req, res, next) => {
+  const disabledServers = [];
+  const reenabledIds = new Set();
+
+  try {
+    const servers = await mikrotik('GET', '/ip/hotspot');
+    const enabledServers = (Array.isArray(servers) ? servers : []).filter(server =>
+      server['.id'] && server.disabled !== 'true' && server.invalid !== 'true'
+    );
+
+    if (enabledServers.length === 0) {
+      return res.status(409).json({ error: 'No enabled hotspot server found' });
+    }
+
+    for (const server of enabledServers) {
+      await mikrotik('POST', '/ip/hotspot/disable', { '.id': server['.id'] });
+      disabledServers.push(server);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    for (const server of disabledServers) {
+      await mikrotik('POST', '/ip/hotspot/enable', { '.id': server['.id'] });
+      reenabledIds.add(server['.id']);
+    }
+
+    res.json({
+      success: true,
+      restarted: disabledServers.length,
+      servers: disabledServers.map(server => server.name || server['.id']),
+    });
+  } catch (e) {
+    // Best effort: never leave a server disabled because a later step failed.
+    for (const server of disabledServers) {
+      if (reenabledIds.has(server['.id'])) continue;
+      try {
+        await mikrotik('POST', '/ip/hotspot/enable', { '.id': server['.id'] });
+      } catch (recoveryError) {
+        console.error(`[Hotspot restart recovery] Failed to re-enable ${server.name || server['.id']}:`, recoveryError.message);
+      }
+    }
+    next(e);
+  }
+});
+
 // Hotspot — Users
 app.get('/api/hotspot/users', async (req, res, next) => {
   try { res.json(await mikrotik('GET', '/ip/hotspot/user')); }

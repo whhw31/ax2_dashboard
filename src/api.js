@@ -27,6 +27,7 @@ export const api = {
   // Hotspot — Active
   getActive: () => request('GET', '/hotspot/active'),
   disconnect: (id) => request('POST', '/hotspot/disconnect', { id }),
+  restartHotspot: () => request('POST', '/hotspot/restart', {}),
 
   // Hotspot — Users
   getUsers: () => request('GET', '/hotspot/users'),
