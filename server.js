@@ -260,34 +260,11 @@ const LOGIN_PAGE = `<!DOCTYPE html>
       msgEl.innerHTML = '<div class="error-msg">Invalid username or password.</div>';
     }
 
-    // Handle form via fetch for smoother UX
     document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
       const btn = document.getElementById('login-submit');
+      const msgEl = document.getElementById('msg');
       btn.disabled = true;
       btn.textContent = 'Signing in…';
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value,
-          }),
-        });
-        const data = await res.json();
-        if (data.ok) {
-          window.location.href = '/';
-        } else {
-          msgEl.innerHTML = '<div class="error-msg">' + (data.error || 'Invalid credentials.') + '</div>';
-          btn.disabled = false;
-          btn.textContent = 'Sign In';
-        }
-      } catch {
-        msgEl.innerHTML = '<div class="error-msg">Connection error. Please try again.</div>';
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-      }
     });
   </script>
 </body>
@@ -336,10 +313,11 @@ app.post('/api/login', (req, res) => {
 
   if (username === user && password === pass) {
     setSessionCookie(res, username);
-    return res.json({ ok: true });
+    if (req.is('application/json')) return res.json({ ok: true });
+    return res.redirect('/');
   }
-
-  return res.status(401).json({ ok: false, error: 'Invalid username or password.' });
+  if (req.is('application/json')) return res.status(401).json({ ok: false, error: 'Invalid username or password.' });
+  return res.redirect('/login?error=1');
 });
 
 // ── Logout ─────────────────────────────────────────────────────
@@ -615,7 +593,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // ── Start ──────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n  🚀 ax2 Dashboard API running on http://localhost:${PORT}`);
   console.log(`  📡 Router: ${BASE_URL}`);
