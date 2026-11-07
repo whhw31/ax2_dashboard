@@ -86,7 +86,7 @@ const LOGIN_PAGE = `<!DOCTYPE html>
   <title>Sign In — ax2 Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -94,134 +94,123 @@ const LOGIN_PAGE = `<!DOCTYPE html>
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0a0e1a;
-      font-family: 'Inter', system-ui, sans-serif;
-      color: #e2e8f0;
+      padding: 24px;
+      background: #0f1718;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      color: #dce7e5;
       overflow: hidden;
     }
     body::before {
       content: '';
       position: fixed;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,.12) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 80%, rgba(139,92,246,.08) 0%, transparent 50%);
-      animation: drift 20s ease-in-out infinite;
+      inset: 0;
+      background-image: linear-gradient(rgba(42,58,62,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(42,58,62,.16) 1px, transparent 1px);
+      background-size: 32px 32px;
       z-index: 0;
-    }
-    @keyframes drift {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-3%, 2%); }
     }
     .login-card {
       position: relative;
       z-index: 1;
-      width: 90%;
-      max-width: 400px;
-      padding: 2.5rem 2rem;
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(148, 163, 184, .12);
-      border-radius: 1.5rem;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, .6);
+      width: 100%;
+      max-width: 390px;
+      padding: 32px;
+      background: #162225;
+      border: 1px solid #3a4d50;
+      border-top: 3px solid #7fb8ac;
+      border-radius: 8px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
     }
     .login-header {
-      text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 28px;
     }
     .login-logo {
-      width: 52px; height: 52px;
-      margin: 0 auto 1rem;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border-radius: 1rem;
+      width: 48px; height: 38px;
+      margin-bottom: 20px;
+      background: #142220;
+      border: 1px solid #294942;
+      border-left: 3px solid #7fb8ac;
+      border-radius: 3px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px rgba(99,102,241,.3);
-    }
-    .login-logo svg { color: #fff; }
-    .login-header h1 {
-      font-size: 1.5rem;
+      color: #9ed0c6;
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      font-size: 15px;
       font-weight: 700;
-      color: #f1f5f9;
-      margin-bottom: .35rem;
+      letter-spacing: -.04em;
+    }
+    .login-logo sup { margin: -8px 0 0 1px; font-size: 8px; }
+    .login-header h1 {
+      margin-bottom: 6px;
+      color: #dce7e5;
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -.02em;
     }
     .login-header p {
-      font-size: .875rem;
-      color: #64748b;
+      color: #70827f;
+      font-size: 12px;
     }
     .form-group {
-      margin-bottom: 1.25rem;
+      margin-bottom: 16px;
     }
     .form-group label {
       display: block;
-      font-size: .8rem;
-      font-weight: 600;
-      color: #94a3b8;
-      margin-bottom: .4rem;
-      text-transform: uppercase;
-      letter-spacing: .05em;
+      margin-bottom: 7px;
+      color: #a3b4b1;
+      font-size: 11px;
+      font-weight: 500;
     }
     .form-group input {
       width: 100%;
-      padding: .75rem 1rem;
-      background: rgba(30, 41, 59, .7);
-      border: 1px solid rgba(148, 163, 184, .15);
-      border-radius: .75rem;
-      color: #f1f5f9;
-      font-size: .95rem;
+      height: 44px;
+      padding: 0 12px;
+      background: #111c1e;
+      border: 1px solid #2a3a3e;
+      border-radius: 5px;
+      color: #dce7e5;
+      font-size: 13px;
       font-family: inherit;
-      transition: border-color .2s, box-shadow .2s;
+      transition: border-color .14s, background .14s;
       outline: none;
     }
     .form-group input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+      border-color: #7fb8ac;
+      background: #142124;
     }
-    .form-group input::placeholder { color: #475569; }
+    .form-group input::placeholder { color: #70827f; }
     .login-btn {
       width: 100%;
-      padding: .85rem;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      border: none;
-      border-radius: .75rem;
-      font-size: 1rem;
+      height: 44px;
+      margin-top: 8px;
+      background: #7fb8ac;
+      color: #0f1718;
+      border: 1px solid #7fb8ac;
+      border-radius: 5px;
+      font-size: 12px;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: opacity .2s, transform .1s;
-      margin-top: .5rem;
+      transition: background .14s;
     }
-    .login-btn:hover { opacity: .9; }
-    .login-btn:active { transform: scale(.98); }
+    .login-btn:hover { background: #9ed0c6; }
     .login-btn:disabled { opacity: .5; cursor: not-allowed; }
     .error-msg {
-      background: rgba(239, 68, 68, .12);
-      border: 1px solid rgba(239, 68, 68, .25);
-      color: #fca5a5;
-      padding: .65rem 1rem;
-      border-radius: .6rem;
-      font-size: .85rem;
-      margin-bottom: 1.25rem;
-      text-align: center;
-      animation: shake .4s ease;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-6px); }
-      75% { transform: translateX(6px); }
+      background: rgba(217,120,113,.08);
+      border-left: 3px solid #d97871;
+      color: #e39a94;
+      padding: 10px 12px;
+      font-size: 11px;
+      margin-bottom: 16px;
     }
     .logout-msg {
-      background: rgba(34, 197, 94, .1);
-      border: 1px solid rgba(34, 197, 94, .2);
-      color: #86efac;
-      padding: .65rem 1rem;
-      border-radius: .6rem;
-      font-size: .85rem;
-      margin-bottom: 1.25rem;
-      text-align: center;
+      background: rgba(117,185,154,.08);
+      border-left: 3px solid #75b99a;
+      color: #9bceb5;
+      padding: 10px 12px;
+      font-size: 11px;
+      margin-bottom: 16px;
     }
   </style>
 </head>
@@ -229,12 +218,10 @@ const LOGIN_PAGE = `<!DOCTYPE html>
   <div class="login-card">
     <div class="login-header">
       <div class="login-logo">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
-        </svg>
+        <span>AX</span><sup>2</sup>
       </div>
-      <h1>ax2 Dashboard</h1>
-      <p>Sign in to continue</p>
+      <h1>Router console</h1>
+      <p>Sign in to manage hotspot operations.</p>
     </div>
     <div id="msg"></div>
     <form id="login-form" method="POST" action="/api/login">
@@ -337,6 +324,32 @@ const ROUTER = {
 const BASE_URL = `${ROUTER.protocol}://${ROUTER.ip}/rest`;
 const AUTH_HEADER = 'Basic ' + Buffer.from(`${ROUTER.user}:${ROUTER.pass}`).toString('base64');
 
+// ── Router reachability: log outages once, not per request ─────
+const OUTAGE_REMINDER_MS = 10 * 60 * 1000;
+const routerLink = { down: false, since: 0, lastReminder: 0, suppressed: 0 };
+
+function markRouterDown(cause) {
+  const now = Date.now();
+  if (!routerLink.down) {
+    Object.assign(routerLink, { down: true, since: now, lastReminder: now, suppressed: 0 });
+    console.error(`[MikroTik] Router unreachable at ${BASE_URL} (${cause}) — suppressing repeat errors until it recovers`);
+    return;
+  }
+  routerLink.suppressed++;
+  if (now - routerLink.lastReminder >= OUTAGE_REMINDER_MS) {
+    const mins = Math.round((now - routerLink.since) / 60000);
+    console.error(`[MikroTik] Router still unreachable after ${mins} min (${cause}, ${routerLink.suppressed} failed requests)`);
+    routerLink.lastReminder = now;
+  }
+}
+
+function markRouterUp() {
+  if (!routerLink.down) return;
+  const secs = Math.round((Date.now() - routerLink.since) / 1000);
+  console.log(`[MikroTik] Router reachable again after ${secs}s (${routerLink.suppressed} failed requests suppressed)`);
+  routerLink.down = false;
+}
+
 // ── Helper: call MikroTik REST API ─────────────────────────────
 async function mikrotik(method, path, body = null) {
   const url = `${BASE_URL}${path}`;
@@ -353,11 +366,13 @@ async function mikrotik(method, path, body = null) {
   try {
     res = await fetch(url, opts);
   } catch (fetchErr) {
-    // Log the root cause (ECONNREFUSED, CERT errors, DNS, etc.)
+    // Root cause (ECONNREFUSED, CERT errors, DNS, etc.) is logged once per outage
     const cause = fetchErr.cause || fetchErr;
-    console.error(`[MikroTik] ${method} ${url} → Network error:`, cause.code || cause.message);
+    markRouterDown(cause.code || cause.message);
+    fetchErr.isNetworkError = true;
     throw fetchErr;
   }
+  markRouterUp();
 
   const text = await res.text();
 
@@ -409,7 +424,7 @@ app.get('/api/stream', (req, res) => {
 
       res.write(`data: ${JSON.stringify(payload)}\n\n`);
     } catch (err) {
-      console.error('[SSE poll error]', err.message);
+      if (!err.isNetworkError) console.error('[SSE poll error]', err.message);
       res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
     }
 
@@ -577,7 +592,7 @@ app.get('/api/queues', async (req, res, next) => {
 
 // ── Error handler ──────────────────────────────────────────────
 app.use((err, req, res, _next) => {
-  console.error('[API Error]', err.message, err.detail || '');
+  if (!err.isNetworkError) console.error('[API Error]', err.message, err.detail || '');
   res.status(err.status || 500).json({
     error: err.message,
     detail: err.detail,
