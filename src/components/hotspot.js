@@ -28,20 +28,23 @@ api.getUsers().then(u => { cachedUsers = u; }).catch(() => {});
 export function renderActive(container) {
   container.innerHTML = `
     <div class="section-header">
-      <h2 class="section-title">Active Sessions<span class="section-count" id="active-count">0</span></h2>
-      <button class="btn btn-danger btn-sm" id="restart-hotspot-btn" onclick="window.__restartHotspot()">↻ Restart Hotspot</button>
+      <div>
+        <h2 class="section-title">Active sessions<span class="section-count" id="active-count">0</span></h2>
+        <p class="section-description">Live throughput and connection state.</p>
+      </div>
+      <button class="btn btn-danger btn-sm" id="restart-hotspot-btn" onclick="window.__restartHotspot()">Restart service</button>
     </div>
     <div class="search-bar">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" placeholder="Search by name, comment, IP…" id="active-search" value="${escapeHtml(searchQuery)}" />
     </div>
     <div class="section-sort" style="margin-bottom:var(--space-md)">
-      <button class="sort-btn ${currentSort === 'rate' ? 'active' : ''}" data-sort="rate">⚡ Rate</button>
-      <button class="sort-btn ${currentSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
-      <button class="sort-btn ${currentSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
-      <button class="sort-btn ${currentSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
-      <button class="sort-btn ${currentSort === 'time' ? 'active' : ''}" data-sort="time">🕐 Time</button>
-      <button class="sort-btn ${currentSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
+      <button class="sort-btn ${currentSort === 'rate' ? 'active' : ''}" data-sort="rate">Live rate</button>
+      <button class="sort-btn ${currentSort === 'total' ? 'active' : ''}" data-sort="total">Total usage</button>
+      <button class="sort-btn ${currentSort === 'download' ? 'active' : ''}" data-sort="download">Download</button>
+      <button class="sort-btn ${currentSort === 'upload' ? 'active' : ''}" data-sort="upload">Upload</button>
+      <button class="sort-btn ${currentSort === 'time' ? 'active' : ''}" data-sort="time">Connected</button>
+      <button class="sort-btn ${currentSort === 'name' ? 'active' : ''}" data-sort="name">Name</button>
     </div>
     <div id="active-list">
       <div class="skeleton" style="height:200px"></div>
@@ -205,7 +208,7 @@ export function updateActive(data) {
     if (speedInfo && typeof speedInfo === 'object') {
       speedBadgeHtml = `
         <div class="speed-badge">
-          <span class="speed-badge-label">⚡ ${escapeHtml(profileName)}</span>
+          <span class="speed-badge-label">${escapeHtml(profileName)}</span>
           <span class="speed-badge-values">
             <span class="speed-down">▼ ${speedInfo.download}</span>
             <span class="speed-sep">·</span>
@@ -215,7 +218,7 @@ export function updateActive(data) {
     } else {
       speedBadgeHtml = `
         <div class="speed-badge speed-badge--unlimited">
-          <span class="speed-badge-label">⚡ ${escapeHtml(profileName)}</span>
+          <span class="speed-badge-label">${escapeHtml(profileName)}</span>
           <span class="speed-badge-values">Unlimited</span>
         </div>`;
     }
@@ -227,7 +230,9 @@ export function updateActive(data) {
             <div class="session-avatar" style="background:${color}">${initial}</div>
             <div class="session-identity">
               <div class="session-name">${escapeHtml(displayName)}</div>
-              <div class="session-subline">${comment ? `MAC user: ${escapeHtml(user)}` : `MAC: ${escapeHtml(session['mac-address'] || '—')}`}</div>
+              <div class="session-subline">
+                <span class="user-profile-badge" title="Current profile">${escapeHtml(profileName)}</span>
+              </div>
             </div>
           </div>
           <div class="session-card-metrics">
@@ -250,8 +255,8 @@ export function updateActive(data) {
             <div class="session-stat"><span class="stat-label">Idle</span><span class="stat-value">${formatUptime(session['idle-time']) || '—'}</span></div>
           </div>
           <div class="session-actions">
-            <button class="btn btn-speed btn-sm" onclick="window.__speedAction('${escapeHtml(user)}', '${escapeHtml(id)}')">⚡ Limit</button>
-            <button class="btn btn-cut btn-sm" onclick="window.__cutAction('${escapeHtml(user)}', '${escapeHtml(id)}')">✂ Cut</button>
+            <button class="btn btn-speed btn-sm" onclick="window.__speedAction('${escapeHtml(user)}', '${escapeHtml(id)}')">Change profile</button>
+            <button class="btn btn-cut btn-sm" onclick="window.__cutAction('${escapeHtml(user)}', '${escapeHtml(id)}')">Disconnect</button>
           </div>
         </div>
       </article>`;
@@ -265,8 +270,11 @@ export function updateActive(data) {
 export function renderUsers(container) {
   container.innerHTML = `
     <div class="section-header">
-      <h2 class="section-title">Hotspot Users<span class="section-count" id="users-count">—</span></h2>
-      <button class="btn btn-secondary btn-sm" id="reset-all-btn" onclick="window.__resetAllCounters()">🔄 Reset All</button>
+      <div>
+        <h2 class="section-title">Hotspot users<span class="section-count" id="users-count">—</span></h2>
+        <p class="section-description">Profiles, limits, and lifetime usage.</p>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="reset-all-btn" onclick="window.__resetAllCounters()">Reset all usage</button>
     </div>
     <div class="info-banner" style="margin-bottom:var(--space-md); font-size:11px; opacity:0.8; display:flex; align-items:center; gap:8px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -277,12 +285,12 @@ export function renderUsers(container) {
       <input type="text" placeholder="Search users by name, comment, or profile…" id="users-search" value="${escapeHtml(usersSearchQuery)}" />
     </div>
     <div class="section-sort" style="margin-bottom:var(--space-md)">
-      <button class="sort-btn ${currentUsersSort === 'rate' ? 'active' : ''}" data-sort="rate">⚡ Rate</button>
-      <button class="sort-btn ${currentUsersSort === 'total' ? 'active' : ''}" data-sort="total">Σ Total Usage</button>
-      <button class="sort-btn ${currentUsersSort === 'download' ? 'active' : ''}" data-sort="download">▼ Total DN</button>
-      <button class="sort-btn ${currentUsersSort === 'upload' ? 'active' : ''}" data-sort="upload">▲ Total UP</button>
-      <button class="sort-btn ${currentUsersSort === 'time' ? 'active' : ''}" data-sort="time">🕐 Time</button>
-      <button class="sort-btn ${currentUsersSort === 'name' ? 'active' : ''}" data-sort="name">Aα Name</button>
+      <button class="sort-btn ${currentUsersSort === 'rate' ? 'active' : ''}" data-sort="rate">Live rate</button>
+      <button class="sort-btn ${currentUsersSort === 'total' ? 'active' : ''}" data-sort="total">Total usage</button>
+      <button class="sort-btn ${currentUsersSort === 'download' ? 'active' : ''}" data-sort="download">Download</button>
+      <button class="sort-btn ${currentUsersSort === 'upload' ? 'active' : ''}" data-sort="upload">Upload</button>
+      <button class="sort-btn ${currentUsersSort === 'time' ? 'active' : ''}" data-sort="time">Connected</button>
+      <button class="sort-btn ${currentUsersSort === 'name' ? 'active' : ''}" data-sort="name">Name</button>
     </div>
     <div id="users-list">
       <div class="skeleton" style="height:200px"></div>
@@ -424,7 +432,7 @@ function renderUsersList() {
             <div class="user-card-identity">
               <div class="user-name">${escapeHtml(displayName)}</div>
               <div class="user-subline">
-                <span class="user-profile-badge" title="Current profile">⚡ ${escapeHtml(profileName)}</span>
+                <span class="user-profile-badge" title="Current profile">${escapeHtml(profileName)}</span>
               </div>
             </div>
           </div>
@@ -448,10 +456,10 @@ function renderUsersList() {
             <span class="user-detail-value">${formatBytes(parseInt(user['bytes-in'] || 0))}</span>
           </div>
           <div class="user-actions">
-            <button class="btn btn-speed btn-sm" onclick="window.__editUser('${escapeHtml(id)}')">✏️ Edit</button>
-            <button class="btn btn-sm btn-success" onclick="window.__speedUserAction('${escapeHtml(name)}', '${escapeHtml(id)}')">⚡ Speed</button>
-            <button class="btn btn-secondary btn-sm" onclick="window.__resetCounters('${escapeHtml(name)}', '${escapeHtml(id)}')">🔄 Reset</button>
-            <button class="btn btn-danger btn-sm" onclick="window.__deleteUser('${escapeHtml(name)}', '${escapeHtml(id)}')">🗑 Delete</button>
+            <button class="btn btn-speed btn-sm" onclick="window.__editUser('${escapeHtml(id)}')">Edit</button>
+            <button class="btn btn-sm btn-success" onclick="window.__speedUserAction('${escapeHtml(name)}', '${escapeHtml(id)}')">Change profile</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.__resetCounters('${escapeHtml(name)}', '${escapeHtml(id)}')">Reset usage</button>
+            <button class="btn btn-danger btn-sm" onclick="window.__deleteUser('${escapeHtml(name)}', '${escapeHtml(id)}')">Delete</button>
           </div>
         </div>
       </article>`;
@@ -473,7 +481,10 @@ function renderUsersList() {
 export function renderHosts(container) {
   container.innerHTML = `
     <div class="section-header">
-      <h2 class="section-title">Hotspot Hosts<span class="section-count" id="hosts-count">—</span></h2>
+      <div>
+        <h2 class="section-title">Detected hosts<span class="section-count" id="hosts-count">—</span></h2>
+        <p class="section-description">Devices currently visible to the hotspot.</p>
+      </div>
     </div>
     <div id="hosts-list">
       <div class="skeleton" style="height:200px"></div>
@@ -508,7 +519,7 @@ async function loadHosts() {
         <div class="glass-card host-card">
           <div class="host-info" style="margin-bottom:var(--space-sm)">
             <span class="host-status-badge ${authorized ? 'authorized' : 'unauthorized'}">
-              ${authorized ? '✓ Authorized' : '○ Not Authorized'}
+              ${authorized ? 'Authorized' : 'Not authorized'}
             </span>
           </div>
           <div class="user-details">
@@ -610,7 +621,7 @@ window.__restartHotspot = () => {
         const currentButton = document.getElementById('restart-hotspot-btn');
         if (currentButton) {
           currentButton.disabled = false;
-          currentButton.textContent = '↻ Restart Hotspot';
+          currentButton.textContent = 'Restart service';
         }
       }
     }
@@ -726,8 +737,8 @@ window.__resetCounters = (username, userId) => {
 // Reset ALL counters
 window.__resetAllCounters = () => {
   showConfirmModal(
-    'Reset ALL User Counters?',
-    'This will set downloaded/uploaded bytes to zero for ALL users. Warning: This cannot be undone.',
+    'Reset all user counters?',
+    'This will set downloaded and uploaded bytes to zero for every user. This cannot be undone.',
     async () => {
       try {
         await api.resetAllCounters();

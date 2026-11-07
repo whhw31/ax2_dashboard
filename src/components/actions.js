@@ -31,7 +31,7 @@ export function showProfileModal(username, currentProfile, profiles, onConfirm) 
   ).join('');
 
   openModal(`
-    <h3 class="modal-title">⚡ Assign Profile — ${escapeHtml(username)}</h3>
+    <h3 class="modal-title">Change profile for ${escapeHtml(username)}</h3>
     <div class="modal-body">
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:var(--space-lg)">
         Select a predefined router profile to limit the user's bandwidth securely.
@@ -85,7 +85,7 @@ export function showAddUserModal(profiles, onConfirm) {
   ).join('');
 
   openModal(`
-    <h3 class="modal-title">➕ Add Hotspot User</h3>
+    <h3 class="modal-title">Add hotspot user</h3>
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Username</label>
@@ -163,7 +163,7 @@ export function showEditUserModal(user, profiles, onConfirm) {
   }
 
   openModal(`
-    <h3 class="modal-title">✏️ Edit User — ${escapeHtml(user.name)}</h3>
+    <h3 class="modal-title">Edit ${escapeHtml(user.comment || user.name)}</h3>
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Password</label>

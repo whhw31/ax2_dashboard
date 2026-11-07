@@ -7,7 +7,7 @@
   <title>ax2 Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -15,12 +15,13 @@
     <!-- Top bar -->
     <header id="topbar">
       <div class="topbar-left">
-        <div class="topbar-logo" id="logo-pulse">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
-          </svg>
+        <div class="topbar-logo" aria-hidden="true">
+          <span>AX</span><sup>2</sup>
         </div>
-        <h1 class="topbar-title">ax2 Dashboard</h1>
+        <div class="topbar-brand">
+          <h1 class="topbar-title">Router console</h1>
+          <span class="topbar-subtitle">Hotspot operations</span>
+        </div>
       </div>
       <div class="topbar-right">
         <div class="connection-status" id="connection-status" style="margin-right: var(--space-md)">
@@ -38,28 +39,23 @@
     <!-- Health summary strip -->
     <div id="health-strip" class="health-strip">
       <div class="health-chip" id="chip-cpu">
-        <span class="chip-icon">⚡</span>
         <span class="chip-label">CPU</span>
         <span class="chip-value" id="val-cpu">—</span>
       </div>
       <div class="health-chip" id="chip-mem">
-        <span class="chip-icon">🧠</span>
-        <span class="chip-label">MEM</span>
+        <span class="chip-label">Memory</span>
         <span class="chip-value" id="val-mem">—</span>
       </div>
       <div class="health-chip" id="chip-uptime">
-        <span class="chip-icon">🕐</span>
-        <span class="chip-label">UP</span>
+        <span class="chip-label">Uptime</span>
         <span class="chip-value" id="val-uptime">—</span>
       </div>
       <div class="health-chip" id="chip-tx">
-        <span class="chip-icon">▲</span>
-        <span class="chip-label">TX</span>
+        <span class="chip-label">Transmit</span>
         <span class="chip-value" id="val-tx">—</span>
       </div>
       <div class="health-chip" id="chip-rx">
-        <span class="chip-icon">▼</span>
-        <span class="chip-label">RX</span>
+        <span class="chip-label">Receive</span>
         <span class="chip-value" id="val-rx">—</span>
       </div>
     </div>

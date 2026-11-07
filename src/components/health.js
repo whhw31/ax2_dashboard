@@ -1,56 +1,54 @@
 // ── Health Panel Component ──────────────────────────────────────
 import { formatBytes, formatUptime, memoryPercent, formatBps } from '../utils.js';
 
-const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 38; // radius=38 in SVG
-
-function createGauge(id, label, color) {
+function createGauge(id, label, detail) {
   return `
-    <div class="glass-card gauge-card">
-      <div class="gauge-ring">
-        <svg width="90" height="90" viewBox="0 0 90 90">
-          <circle class="gauge-bg" cx="45" cy="45" r="38"/>
-          <circle class="gauge-fill" id="gauge-fill-${id}" cx="45" cy="45" r="38"
-            stroke="${color}"
-            stroke-dasharray="${GAUGE_CIRCUMFERENCE}"
-            stroke-dashoffset="${GAUGE_CIRCUMFERENCE}"/>
-        </svg>
-        <div class="gauge-text">
-          <span id="gauge-val-${id}">—</span>
-          <small>${label}</small>
-        </div>
+    <div class="instrument-card instrument-${id}">
+      <div class="instrument-heading">
+        <span>${label}</span>
+        <span class="instrument-detail">${detail}</span>
       </div>
-      <div class="gauge-label">${label}</div>
+      <strong class="instrument-value" id="gauge-val-${id}">—</strong>
+      <div class="instrument-track" aria-hidden="true">
+        <span class="instrument-fill" id="gauge-fill-${id}"></span>
+      </div>
     </div>`;
 }
 
 export function renderHealth(container) {
   container.innerHTML = `
     <div class="section-header">
-      <h2 class="section-title">Router Health</h2>
+      <div>
+        <h2 class="section-title">Router health</h2>
+        <p class="section-description">Load, capacity, and interface state at a glance.</p>
+      </div>
     </div>
     <div class="health-grid">
-      ${createGauge('cpu', 'CPU', 'var(--accent-cyan)')}
-      ${createGauge('mem', 'Memory', 'var(--accent-purple)')}
-      ${createGauge('disk', 'Disk', 'var(--accent-orange)')}
-      ${createGauge('active', 'Active', 'var(--accent-green)')}
+      ${createGauge('cpu', 'Processor', 'current load')}
+      ${createGauge('mem', 'Memory', 'used capacity')}
+      ${createGauge('disk', 'Storage', 'used capacity')}
+      ${createGauge('active', 'Sessions', 'currently online')}
     </div>
 
-    <div class="glass-card" id="system-info-card">
-      <div class="section-header" style="margin-bottom:var(--space-sm)">
-        <h3 style="font-size:14px;font-weight:700;">System Info</h3>
-      </div>
-      <div id="system-info-rows">
-        <div class="skeleton" style="height:120px;"></div>
-      </div>
-    </div>
+    <div class="health-detail-grid">
+      <section class="glass-card detail-panel" id="system-info-card">
+        <div class="panel-heading">
+          <h3>System information</h3>
+        </div>
+        <div id="system-info-rows">
+          <div class="skeleton" style="height:120px;"></div>
+        </div>
+      </section>
 
-    <div class="glass-card" id="interfaces-card">
-      <div class="section-header" style="margin-bottom:var(--space-sm)">
-        <h3 style="font-size:14px;font-weight:700;">Interfaces</h3>
-      </div>
-      <div id="interfaces-list">
-        <div class="skeleton" style="height:160px;"></div>
-      </div>
+      <section class="glass-card detail-panel" id="interfaces-card">
+        <div class="panel-heading">
+          <h3>Interfaces</h3>
+          <span>Traffic totals</span>
+        </div>
+        <div id="interfaces-list">
+          <div class="skeleton" style="height:160px;"></div>
+        </div>
+      </section>
     </div>
   `;
 }
@@ -141,14 +139,13 @@ function updateGauge(id, percent, text) {
   const fill = document.getElementById(`gauge-fill-${id}`);
   const val = document.getElementById(`gauge-val-${id}`);
   if (fill) {
-    const offset = GAUGE_CIRCUMFERENCE - (percent / 100) * GAUGE_CIRCUMFERENCE;
-    fill.style.strokeDashoffset = offset;
+    fill.style.width = `${Math.max(0, Math.min(percent, 100))}%`;
 
     // Color transitions based on load
     if (id === 'cpu' || id === 'mem' || id === 'disk') {
-      if (percent > 85) fill.style.stroke = 'var(--accent-red)';
-      else if (percent > 60) fill.style.stroke = 'var(--accent-orange)';
-      else fill.style.stroke = '';
+      if (percent > 85) fill.dataset.state = 'critical';
+      else if (percent > 60) fill.dataset.state = 'warning';
+      else fill.dataset.state = 'healthy';
     }
   }
   if (val) val.textContent = text;
