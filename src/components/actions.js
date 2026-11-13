@@ -92,8 +92,8 @@ export function showAddUserModal(profiles, onConfirm) {
         <input type="text" class="form-input" id="add-username" placeholder="Enter username" autocomplete="off" />
       </div>
       <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="text" class="form-input" id="add-password" placeholder="Enter password" autocomplete="off" />
+        <label class="form-label">Password (optional)</label>
+        <input type="text" class="form-input" id="add-password" placeholder="Leave empty for MAC-login users" autocomplete="off" />
       </div>
       <div class="form-group">
         <label class="form-label">MAC Address (optional)</label>
@@ -131,14 +131,13 @@ export function showAddUserModal(profiles, onConfirm) {
     const comment = document.getElementById('add-comment').value.trim();
 
     if (!name) { document.getElementById('add-username').focus(); return; }
-    if (!password) { document.getElementById('add-password').focus(); return; }
 
     const limitBytes = parseByteSuffix(limitInput);
 
     closeModal();
     onConfirm({ 
       name, 
-      password, 
+      password: password || undefined, 
       'mac-address': mac || undefined,
       'limit-bytes-total': limitBytes || undefined,
       profile: profile || undefined, 

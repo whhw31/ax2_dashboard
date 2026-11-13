@@ -528,7 +528,14 @@ app.get('/api/hotspot/users', async (req, res, next) => {
 app.post('/api/hotspot/users', async (req, res, next) => {
   try {
     const { name, password, profile, comment } = req.body;
-    const body = { name, password };
+    const mac = req.body['mac-address'];
+    const limit = req.body['limit-bytes-total'];
+    if (!name || !String(name).trim()) return res.status(400).json({ error: 'Username is required.' });
+    // Password is optional: MAC-login users authenticate by MAC and have none.
+    const body = { name: String(name).trim() };
+    if (password) body.password = password;
+    if (mac) body['mac-address'] = mac;
+    if (limit) body['limit-bytes-total'] = String(limit);
     if (profile) body.profile = profile;
     if (comment) body.comment = comment;
     res.json(await mikrotik('PUT', '/ip/hotspot/user', body));
