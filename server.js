@@ -377,7 +377,12 @@ async function mikrotik(method, path, body = null) {
   const text = await res.text();
 
   if (!res.ok) {
-    const err = new Error(`MikroTik API error: ${res.status}`);
+    // Surface RouterOS's own reason (e.g. "already have user with this name")
+    // instead of a bare status code.
+    let reason = '';
+    try { const j = JSON.parse(text); reason = j.detail || j.message || ''; } catch { reason = text.slice(0, 200); }
+    reason = reason.replace(/^failure:\s*/i, '');
+    const err = new Error(reason ? `MikroTik: ${reason}` : `MikroTik API error: ${res.status}`);
     err.status = res.status;
     err.detail = text;
     throw err;
